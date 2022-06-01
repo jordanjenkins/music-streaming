@@ -12,7 +12,7 @@ provider "google" {
   project     = var.project
   region      = var.region
   zone        = var.zone
-  credentials = file("C:/Users/Jordan/.google/credentials/music-streaming-iaas.json")
+  credentials = "Your Credential File Location"
 }
 
 resource "google_compute_firewall" "port_rules" {
