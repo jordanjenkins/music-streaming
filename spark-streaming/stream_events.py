@@ -5,8 +5,7 @@
 
 import os
 from schema import schema
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, month, hour, dayofmonth, year, udf
+from functions import *
 
 # Kafka Topics
 
@@ -20,68 +19,9 @@ KAFKA_ADDRESS = os.getenv('KAFKA_ADDRESS', 'localhost')
 GCP_GCS_BUCKET = os.getenv('GCP_GCS_BUCKET', 'music-streams')
 GCS_STORAGE_PATH = f'gs://{GCP_GCS_BUCKET}'
 
-def create_or_get_spark_session(app_name, master='yarn'):
-
-    spark = (SparkSession
-            .builder
-            .appName(app_name)
-            .master(master = master)
-            .getOrCreate())
-
-    return spark
-
+# Create Spark session
 spark = create_or_get_spark_session('Eventsim Stream')
 spark.streams.resetTerminated()
-
-def create_kafka_read_stream(spark, kafka_address, kafka_port, topic, starting_offset = 'earliest'):
-    read_stream = (spark
-                    .readStream
-                    .format('kafka')
-                    .option('kafka.bootstrap,servers', f'{kafka_address}:{kafka_port}')
-                    .option('failOnDataLoss', False)
-                    .option('startingOffsets', starting_offset)
-                    .option('subscribe', topic)
-                    .load())
-    return read_stream
-
-@udf
-def string_decode(s, encoding='utf-8'):
-    if s:
-        return (s.encode('latin1')         # To bytes, required by 'unicode-escape'
-                .decode('unicode-escape') # Perform the actual octal-escaping decode
-                .encode('latin1')         # 1:1 mapping back to bytes
-                .decode(encoding)         # Decode original encoding
-                .strip('\"'))
-
-    else:
-        return s
-
-def process_stream(stream, stream_schema, topic):
-    stream = (stream
-              .selectExpr('CAST(value as STRING')
-              .select(
-                  from_json(col('value'), stream_schema).alias(
-                      'data'
-                  )
-              )
-              .select('data.')
-              )
-    
-    stream = (stream
-             .withColumn('ts', (col('ts')/1000).cast('timestamp'))
-             .withColumn('year', year(col('ts')))
-             .withColumn('month', month(col('ts')))
-             .withColumn('day', dayofmonth(col('ts')))
-             .withColumn('hour', hour(col('ts')))
-             )
-    
-    if topic in ['listen_events', 'page_view_events']:
-        stream = (stream
-                 .withColumn('song', string_decode('song'))
-                 .withColumn('artist', string_decode('artist'))
-                 )
-    
-    return stream
 
 # Create Streams for each event type
 listen_events = create_kafka_read_stream(
@@ -102,19 +42,7 @@ auth_events = create_kafka_read_stream(
 auth_events = process_stream(
     auth_events, schema[AUTH_EVENTS_TOPIC], AUTH_EVENTS_TOPIC)
 
-
-def create_file_write_stream(stream, storage_path, checkpoint_path, trigger = '120 seconds', output_mode = 'append', file_format = 'parquet'):
-    write_stream = (stream
-                    .writeStream
-                    .format(file_format)
-                    .partitionBy('month', 'day', 'hour')
-                    .option('path', storage_path)
-                    .option('checkpointLocation', checkpoint_path)
-                    .trigger(processingTime = trigger)
-                    .outputMode(output_mode))
-    
-    return write_stream
-
+# Write streams to GCS
 write_listen_events = create_file_write_stream(listen_events,
                                                 f'{GCS_STORAGE_PATH}/{LISTEN_EVENTS_TOPIC}',
                                                 f'{GCS_STORAGE_PATH}/checkpoint/{LISTEN_EVENTS_TOPIC}'
