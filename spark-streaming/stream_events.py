@@ -4,9 +4,6 @@
 # stream_events.py
 
 import os
-from pickle import LIST
-import re
-from tkinter.messagebox import RETRY
 from schema import schema
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col, month, hour, dayofmonth, year, udf
