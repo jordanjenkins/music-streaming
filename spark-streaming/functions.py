@@ -44,7 +44,7 @@ def create_kafka_read_stream(spark, kafka_address, kafka_port, topic, starting_o
     read_stream = (spark
                     .readStream
                     .format('kafka')
-                    .option('kafka.bootstrap,servers', f'{kafka_address}:{kafka_port}')
+                    .option('kafka.bootstrap.servers', f'{kafka_address}:{kafka_port}')
                     .option('failOnDataLoss', False)
                     .option('startingOffsets', starting_offset)
                     .option('subscribe', topic)
@@ -89,13 +89,13 @@ def process_stream(stream, stream_schema, topic):
         stream: DataStreamReader
     """
     stream = (stream
-              .selectExpr('CAST(value as STRING')
+              .selectExpr('CAST(value as STRING)')
               .select(
                   from_json(col('value'), stream_schema).alias(
                       'data'
                   )
               )
-              .select('data.')
+              .select('data.*')
               )
     
     stream = (stream
