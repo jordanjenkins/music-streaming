@@ -16,15 +16,15 @@ java --version
 rm openjdk-11.0.2_linux-x64_bin.tar.gz
 
 echo "Downloading Spark..."
-wget https://www.apache.org/dyn/closer.lua/spark/spark-3.2.1/spark-3.2.1-bin-hadoop3.2.tgz
+wget https://dlcdn.apache.org/spark/spark-3.0.3/spark-3.0.3-bin-hadoop3.2.tgz
 
 echo "Extracting Spark..."
-tar xzfv spark-3.2.1-bin-hadoop3.2.tgz
-rm spark-3.2.1-bin-hadoop3.2.tgz
+tar xzfv spark-3.0.3-bin-hadoop3.2.tgz
+rm spark-3.0.3-bin-hadoop3.2.tgz
 
 echo "Exporting Spark Home..."
 echo '' >> ~/.bashrc
-echo 'export SPARK_HOME="${HOME}/spark/spark-3.2.1-bin-hadoop3.2"' >> ~/.bashrc
+echo 'export SPARK_HOME="${HOME}/spark/spark-3.0.3-bin-hadoop3.2"' >> ~/.bashrc
 echo 'export PATH="${SPARK_HOME}/bin:${PATH}"' >> ~/.bashrc
 eval "$(cat ~/.bashrc | tail -n +10)" # A hack because source .bashrc doesn't work inside the script
 
