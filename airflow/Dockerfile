@@ -1,6 +1,6 @@
-FROM apache/airflow:2.2.3
+FROM apache/airflow:2.2.5
 
-ENV AIRFLOW_HOME = /opt/airflow
+ENV AIRFLOW_HOME=/opt/airflow
 
 USER root
 RUN apt-get update && \
