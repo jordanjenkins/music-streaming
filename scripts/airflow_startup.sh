@@ -2,7 +2,7 @@
 
 
 echo "Building airflow docker images..."
-cd ~/music-streams/airflow
+cd ~/music-streaming/airflow
 docker-compose build
 
 echo "Running airflow-init..."
